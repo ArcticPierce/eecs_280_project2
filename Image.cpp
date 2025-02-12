@@ -87,8 +87,8 @@ int Image_height(const Image* img) {
 //           0 <= column && column < Image_width(img)
 // EFFECTS:  Returns the pixel in the Image at the given row and column.
 Pixel Image_get_pixel(const Image* img, int row, int column) {
-  //assert(0 <= row && row < Image_height(img));
-  //assert(0 <= column && column < Image_width(img));
+  assert(0 <= row && row < Image_height(img));
+  assert(0 <= column && column < Image_width(img));
   return {
     *Matrix_at(&(img->red_channel), row, column), 
     *Matrix_at(&(img->green_channel), row, column), 
@@ -103,6 +103,8 @@ Pixel Image_get_pixel(const Image* img, int row, int column) {
 // EFFECTS:  Sets the pixel in the Image at the given row and column
 //           to the given color.
 void Image_set_pixel(Image* img, int row, int column, Pixel color) {
+  assert(0 <= row && row < Image_height(img));
+  assert(0 <= column && column < Image_width(img));
   *Matrix_at(&(img->red_channel), row, column) = color.r; // {255, 0 ,0}
   *Matrix_at(&(img->green_channel), row, column) = color.g;
   *Matrix_at(&(img->blue_channel), row, column) = color.b;

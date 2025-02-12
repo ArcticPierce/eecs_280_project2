@@ -88,8 +88,8 @@ static int squared_difference(Pixel p1, Pixel p2) {
 void compute_energy_matrix(const Image* img, Matrix* energy) {
   Matrix_init(energy,img->width,img->height);
   int max = 0;
-  for(int row = 1; row < img->width-1; row++) {
-    for(int column = 1; column < img->height-1; column++) {
+  for(int row = 1; row < img->height-1; row++) {
+    for(int column = 1; column < img->width-1; column++) {
       int n_s = squared_difference(Image_get_pixel(img, row -1, column), Image_get_pixel(img, row + 1, column));
       int w_e = squared_difference(Image_get_pixel(img, row, column -1), Image_get_pixel(img, row, column + 1));
       *Matrix_at(energy, row, column) = n_s + w_e;
@@ -177,11 +177,12 @@ vector<int> find_minimal_vertical_seam(const Matrix* cost) {
 //           then do an assignment at the end to copy it back into the
 //           original image.
 void remove_vertical_seam(Image *img, const vector<int> &seam) {
+  assert(seam.size() == Image_height(img));
   Image img2;
   Image_init(&img2, Image_width(img) - 1, Image_height(img));
 
   // for every cell
-  /*int c = 0; // accounts for removed column between images
+  int c = 0; // accounts for removed column between images
   for (int row = 0; row < Image_height(&img2); row++) {
     for (int col = 0; col < Image_width(&img2); col++) {
       if (seam[row] == col) {
@@ -191,18 +192,21 @@ void remove_vertical_seam(Image *img, const vector<int> &seam) {
         //cout << Image_get_pixel(img, row, col).r << " " << Image_get_pixel(img, row, col).g << " " << Image_get_pixel(img, row, col).b << "\n";
     }
     c = 0;
-  }*/
-  for (int r = 0; r < Image_height(img); r++) {
+  }
+}
+  /*for (int r = 0; r < Image_height(img); r++) {
     for (int c = 0 ; c < seam[r]; c++) {
+      assert(0 <= seam[r] && seam[r] < Image_width(img));
       Image_set_pixel(&img2, r, c, Image_get_pixel(img, r, c));
     }
     for (int c = seam[r]; c < Image_width(img); c++) {
+      assert(0 <= r && r < Image_width(img));
       Image_set_pixel(&img2, r, c, Image_get_pixel(img, r, c+1));
     }
   }
 
   *img = img2;
-}
+}*/
 
 
 // REQUIRES: img points to a valid Image
@@ -214,6 +218,7 @@ void remove_vertical_seam(Image *img, const vector<int> &seam) {
 //           the right size. You can use .data() on a vector to get
 //           the underlying array.
 void seam_carve_width(Image *img, int newWidth) {
+  assert(0 < newWidth && newWidth <= Image_width(img));
   int oldWidth = Image_width(img);
   for (int i = 0; i < oldWidth - newWidth;i++) {
   Matrix e,c;
@@ -233,6 +238,7 @@ void seam_carve_width(Image *img, int newWidth) {
 //           then applying seam_carve_width(img, newHeight), then rotating
 //           90 degrees right.
 void seam_carve_height(Image *img, int newHeight) {
+  assert(0 < newHeight && newHeight <= Image_height(img));
   rotate_left(img);
   seam_carve_width(img,newHeight);
   rotate_right(img);
@@ -247,6 +253,8 @@ void seam_carve_height(Image *img, int newHeight) {
 // NOTE:     This is equivalent to applying seam_carve_width(img, newWidth)
 //           and then applying seam_carve_height(img, newHeight).
 void seam_carve(Image *img, int newWidth, int newHeight) {
+  assert(0 < newWidth && newWidth <= Image_width(img));
+  assert(0 < newHeight && newHeight <= Image_height(img));
   seam_carve_width(img,newWidth);
   seam_carve_height(img,newHeight);
 }

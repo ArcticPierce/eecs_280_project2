@@ -58,8 +58,8 @@ int Matrix_height(const Matrix* mat) {
 // EFFECTS:  Returns a pointer to the element in the Matrix
 //           at the given row and column.
 int* Matrix_at(Matrix* mat, int row, int column) {
-  //assert(0 <= row && row < mat->height);
-  //assert(0 <= column && column < mat->width);
+  assert(0 <= row && row < mat->height);
+  assert(0 <= column && column < mat->width);
   return &(mat->data[row*Matrix_width(mat) + column]);
 }
 
@@ -70,9 +70,9 @@ int* Matrix_at(Matrix* mat, int row, int column) {
 // EFFECTS:  Returns a pointer-to-const to the element in
 //           the Matrix at the given row and column.
 const int* Matrix_at(const Matrix* mat, int row, int column) {
-  //assert(0 >= row && row < mat->height);
-  //assert(0 >= column && column < mat->width);
-  const int* ptr = &(mat->data[row*Matrix_width(mat) + column]);
+  assert(0 <= row && row < Matrix_height(mat));
+  assert(0 <= column && column < Matrix_width(mat));
+  const int *ptr = &(mat->data[row*Matrix_width(mat) + column]);
   return ptr;
 }
 
@@ -93,9 +93,9 @@ void Matrix_fill(Matrix* mat, int value) {
 //           the given value. These are all elements in the first/last
 //           row or the first/last column.
 void Matrix_fill_border(Matrix* mat, int value) {
-  for(int row = 0; row < mat->width; row++) {
-    for(int column = 0; column < mat->height; column++){
-      if(row == 0 || column == 0 || row == mat->width - 1 || column == mat->height-1) {
+  for(int row = 0; row < Matrix_height(mat); row++) {
+    for(int column = 0; column < Matrix_width(mat); column++){
+      if(row == 0 || column == 0 || row == mat->width - 1 || column == mat->height -1 ) {
         *Matrix_at(mat,row,column) = value;
       }
     }

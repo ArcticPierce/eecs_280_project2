@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <vector>
+using namespace std;
 
 // Representation of a 2D matrix of integers
 // Matrix objects may be copied.

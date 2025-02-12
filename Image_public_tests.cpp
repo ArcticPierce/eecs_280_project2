@@ -19,10 +19,10 @@ TEST(test_image_basic) {
   Pixel red = {255, 0, 0};
   Pixel green = {0, 255, 0};
   Image img;
-  Image_init(&img, 3, 4);
+  Image_init(&img, 99, 99);
 
-  ASSERT_EQUAL(Image_width(&img), 3);
-  ASSERT_EQUAL(Image_height(&img), 4);
+  ASSERT_EQUAL(Image_width(&img), 99);
+  ASSERT_EQUAL(Image_height(&img), 99);
 
   Image_fill(&img, red);
   ASSERT_TRUE(Pixel_equal(Image_get_pixel(&img, 2, 2), red));

@@ -86,8 +86,17 @@ static int squared_difference(Pixel p1, Pixel p2) {
 //           image is computed and written into it.
 //           See the project spec for details on computing the energy matrix.
 void compute_energy_matrix(const Image* img, Matrix* energy) {
-  assert(false); // TODO Replace with your implementation!
-  assert(squared_difference(Pixel(), Pixel())); // TODO delete me, this is here to make it compile
+  Matrix_init(energy,img->width,img->height);
+  int max = 0;
+  for(int row = 1; row < img->width-1; row++) {
+    for(int column = 1; column < img->height-1; column++) {
+      int n_s = squared_difference(Image_get_pixel(img, row -1, column), Image_get_pixel(img, row + 1, column));
+      int w_e = squared_difference(Image_get_pixel(img, row, column -1), Image_get_pixel(img, row, column + 1));
+      *Matrix_at(energy, row, column) = n_s + w_e;
+      max = (max < (n_s + w_e)) ? (n_s + w_e):max;
+    }
+  }
+  Matrix_fill_border(energy, max);
 }
 
 
@@ -101,7 +110,27 @@ void compute_energy_matrix(const Image* img, Matrix* energy) {
 //           computed and written into it.
 //           See the project spec for details on computing the cost matrix.
 void compute_vertical_cost_matrix(const Matrix* energy, Matrix *cost) {
-  assert(false); // TODO Replace with your implementation!
+  Matrix_init(cost, Matrix_width(energy), Matrix_height(energy));
+  for(int row = 0; row < Matrix_height(energy); row++) {
+    for(int column = 0; column < Matrix_width(energy); column++) {
+      if(row == 0){
+        *Matrix_at(cost,row, column) = *Matrix_at(energy,row, column);
+      }
+      else{
+        int min = 0;
+        if (column == 0){
+          min = Matrix_min_value_in_row(cost, row - 1, 0, 2);
+        }
+        else if (column == Matrix_width(cost) - 1){
+          min = Matrix_min_value_in_row(cost, row - 1, column - 1, column + 1);
+        }
+        else{
+          min = Matrix_min_value_in_row(cost, row - 1, column - 1, column + 2);
+        }
+        *Matrix_at(cost,row, column) = *Matrix_at(energy,row, column) + min;
+      }
+    }
+  }
 }
 
 
@@ -117,7 +146,21 @@ void compute_vertical_cost_matrix(const Matrix* energy, Matrix *cost) {
 //           Note: When implementing the algorithm, compute the seam starting at the
 //           bottom row and work your way up.
 vector<int> find_minimal_vertical_seam(const Matrix* cost) {
-  assert(false); // TODO Replace with your implementation!
+  int column = Matrix_column_of_min_value_in_row(cost, Matrix_height(cost)- 1, 0, Matrix_width(cost));
+  vector<int> seam = {column};
+  for(int row = Matrix_height(cost) - 1; row > 0; row--){
+    if (column == 0){
+      column = Matrix_column_of_min_value_in_row(cost, row - 1, 0, 2);
+    }
+    else if (column == Matrix_width(cost) - 1){
+      column = Matrix_column_of_min_value_in_row(cost, row - 1, column - 1, column + 1);
+    }
+    else{
+      column = Matrix_column_of_min_value_in_row(cost, row - 1, column - 1, column + 2);
+    }
+    seam.insert(seam.begin(),column);
+  }
+  return seam;
 }
 
 
@@ -134,7 +177,31 @@ vector<int> find_minimal_vertical_seam(const Matrix* cost) {
 //           then do an assignment at the end to copy it back into the
 //           original image.
 void remove_vertical_seam(Image *img, const vector<int> &seam) {
-  assert(false); // TODO Replace with your implementation!
+  Image img2;
+  Image_init(&img2, Image_width(img) - 1, Image_height(img));
+
+  // for every cell
+  /*int c = 0; // accounts for removed column between images
+  for (int row = 0; row < Image_height(&img2); row++) {
+    for (int col = 0; col < Image_width(&img2); col++) {
+      if (seam[row] == col) {
+        c++;
+      }
+      Image_set_pixel(&img2, row, col, Image_get_pixel(img, row, col + c));
+        //cout << Image_get_pixel(img, row, col).r << " " << Image_get_pixel(img, row, col).g << " " << Image_get_pixel(img, row, col).b << "\n";
+    }
+    c = 0;
+  }*/
+  for (int r = 0; r < Image_height(img); r++) {
+    for (int c = 0 ; c < seam[r]; c++) {
+      Image_set_pixel(&img2, r, c, Image_get_pixel(img, r, c));
+    }
+    for (int c = seam[r]; c < Image_width(img); c++) {
+      Image_set_pixel(&img2, r, c, Image_get_pixel(img, r, c+1));
+    }
+  }
+
+  *img = img2;
 }
 
 
@@ -147,7 +214,15 @@ void remove_vertical_seam(Image *img, const vector<int> &seam) {
 //           the right size. You can use .data() on a vector to get
 //           the underlying array.
 void seam_carve_width(Image *img, int newWidth) {
-  assert(false); // TODO Replace with your implementation!
+  int oldWidth = Image_width(img);
+  for (int i = 0; i < oldWidth - newWidth;i++) {
+  Matrix e,c;
+  vector<int> s;
+  compute_energy_matrix(img,&e);
+  compute_vertical_cost_matrix(&e,&c);
+  s = find_minimal_vertical_seam(&c);
+  remove_vertical_seam(img,s);
+  }
 }
 
 // REQUIRES: img points to a valid Image
@@ -158,7 +233,9 @@ void seam_carve_width(Image *img, int newWidth) {
 //           then applying seam_carve_width(img, newHeight), then rotating
 //           90 degrees right.
 void seam_carve_height(Image *img, int newHeight) {
-  assert(false); // TODO Replace with your implementation!
+  rotate_left(img);
+  seam_carve_width(img,newHeight);
+  rotate_right(img);
 }
 
 // REQUIRES: img points to a valid Image
@@ -170,5 +247,6 @@ void seam_carve_height(Image *img, int newHeight) {
 // NOTE:     This is equivalent to applying seam_carve_width(img, newWidth)
 //           and then applying seam_carve_height(img, newHeight).
 void seam_carve(Image *img, int newWidth, int newHeight) {
-  assert(false); // TODO Replace with your implementation!
+  seam_carve_width(img,newWidth);
+  seam_carve_height(img,newHeight);
 }
